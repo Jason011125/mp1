@@ -1,6 +1,8 @@
 #include "../include/utils.h"
 #include <cuda_runtime.h>
 
+#define NUM_RUNS 10
+
 #define CUDA_CHECK(func)                                                     	   \
 	do {                                                                           \
 		cudaError_t status = (func);                                               \
@@ -47,14 +49,14 @@
 	cudaEventCreate(&start_ ## name); \
 	cudaEventCreate(&end_ ## name); \
 	float* d_C_INI_ ## name = new float[M * N](); \
-	for (int i = 0; i < Ref::M; i++) { \
-		for (int j = 0; j < Ref::N; j++) { \
-			d_C_INI_ ## name[i * Ref::N + j] = 0; \
+	for (int i = 0; i < M; i++) { \
+		for (int j = 0; j < N; j++) { \
+			d_C_INI_ ## name[i * N + j] = 0; \
 		} \
 	} \
 	for (int i = 0; i < 2; i++) \
 	{ \
-		CUDA_CHECK(cudaMemcpy(d_C_ ## name, d_C_INI_ ## name, Ref::M * Ref::N * sizeof(float), cudaMemcpyHostToDevice)); \
+		CUDA_CHECK(cudaMemcpy(d_C_ ## name, d_C_INI_ ## name, M * N * sizeof(float), cudaMemcpyHostToDevice)); \
 		name(d_A_ ## name, d_B_ ## name, d_C_ ## name, M, N, K); \
 	} \
 	cudaError_t err_t_ ## name = cudaGetLastError(); \
@@ -62,9 +64,9 @@
 		std::cerr << "CUDA Error: " << cudaGetErrorString(err_t_ ## name) << std::endl; \
 	} \
 	float milliseconds_ ## name = 0; \
-	for (int i = 0; i < 3; i++) \
+	for (int i = 0; i < NUM_RUNS; i++) \
 	{ \
-		CUDA_CHECK(cudaMemcpy(d_C_ ## name, d_C_INI_ ## name, Ref::M * Ref::N * sizeof(float), cudaMemcpyHostToDevice)); \
+		CUDA_CHECK(cudaMemcpy(d_C_ ## name, d_C_INI_ ## name, M * N * sizeof(float), cudaMemcpyHostToDevice)); \
 		cudaDeviceSynchronize(); \
 		cudaEventRecord(start_ ## name); \
 		name(d_A_ ## name, d_B_ ## name, d_C_ ## name, M, N, K); \
@@ -75,7 +77,7 @@
 		milliseconds_ ## name += milliseconds_ ## i; \
 	} \
 	cudaMemcpy(C, d_C_ ## name, M * N * sizeof(float), cudaMemcpyDeviceToHost); \
-	std::cout << "Time taken for GEMM (GPU, " << #name <<"): " << milliseconds_ ## name << "ms" << std::endl; \
+	std::cout << "Time taken for GEMM (GPU, " << #name <<"): " << milliseconds_ ## name / (float)NUM_RUNS << "ms" << std::endl; \
 	cudaFree(d_A_ ## name); \
 	cudaFree(d_B_ ## name); \
 	cudaFree(d_C_ ## name);

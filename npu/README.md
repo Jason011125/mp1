@@ -529,4 +529,4 @@ For the performance test, we evaluate the performance using float16 and float32 
 
 ## FAQs
 
-Please refer to an advanced FAQ here: https://github.com/EmilyWebber/nki-samples/blob/main/contributed/advanced_FAQs.md.
+Please refer to an advanced FAQ here: https://github.com/EmilyWebber/nki-samples/blob/main/contributed/advanced_FAQs.md. You can also open a support ticket at https://github.com/aws-neuron/aws-neuron-sdk/issues/new if you have any other questions, thanks!
