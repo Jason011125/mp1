@@ -1,5 +1,6 @@
 #include <chrono>
 #include "../include/utils.h"
+using namespace std;
 
 #define CHECK(name) \
   std::cout << "checking " << #name << std::endl;		\
@@ -57,15 +58,48 @@ void gemm_cpu_o0(float* A, float* B, float *C, int M, int N, int K) {
 // Your optimized implementations go here
 // note that for o4 you don't have to change the code, but just the compiler flags. So, you can use o3's code for that part
 void gemm_cpu_o1(float* A, float* B, float *C, int M, int N, int K) {
-
+	for (int i = 0; i < M; i++) {
+        for (int k = 0; k < K; k++) {
+            float a_ik = A[i * K + k]; 
+            for (int j = 0; j < N; j++) {
+                C[i * N + j] += a_ik * B[k * N + j];
+            }
+        }
+    }
 }
 
 void gemm_cpu_o2(float* A, float* B, float *C, int M, int N, int K) {
+	int TILE_SIZE = 32;
+	for (int i = 0; i < M; i++) {
+        for (int k = 0; k < K; k += TILE_SIZE) {  
+            for (int j = 0; j < N; j += TILE_SIZE) { 
+
+                int minK = std::min(k + TILE_SIZE, K);
+                int minN = std::min(j + TILE_SIZE, N);
+
+                for (int k_t = k; k_t < minK; k_t++) {  
+                    float a_ik = A[i * K + k_t];  
+                    for (int j_t = j; j_t < minN; j_t++) {  
+                        C[i * N + j_t] += a_ik * B[k_t * N + j_t]; 
+                    }
+                }
+            }
+        }
+    }
 
 }
 
 void gemm_cpu_o3(float* A, float* B, float *C, int M, int N, int K) {
-
+	#pragma omp parallel for
+	for (int i = 0; i < M; i++) {
+        for (int k = 0; k < K; k++) {
+            float a_ik = A[i * K + k]; 
+			#pragma omp simd
+            for (int j = 0; j < N; j++) {
+                C[i * N + j] += a_ik * B[k * N + j];
+            }
+        }
+    }
 }
 
 

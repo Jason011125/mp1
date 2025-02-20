@@ -1,0 +1,3 @@
+/Users/chenzixuan/Documents/UIUC/2025-Spring/cs521/mp1/cpu/CMakeFiles/mp1_cpu.dir
+/Users/chenzixuan/Documents/UIUC/2025-Spring/cs521/mp1/cpu/CMakeFiles/edit_cache.dir
+/Users/chenzixuan/Documents/UIUC/2025-Spring/cs521/mp1/cpu/CMakeFiles/rebuild_cache.dir
