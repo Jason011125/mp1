@@ -104,24 +104,120 @@ void gemm_gpu_o0(float* A, float* B, float* C, int M, int N, int K)
 
 // The scafolding for optimized GEMM implementations
 __global__ void gemm_gpu_o1_kernel(float* A, float* B, float *C, int M, int N, int K) {
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < M && col < N) {
+        float sum = 0.0f;
+        for (int k = 0; k < K; k++) {
+            sum += A[row * K + k] * B[k * N + col];
+        }
+        C[row * N + col] = sum;
+    }
 }
 void gemm_gpu_o1(float* A, float* B, float* C, int M, int N, int K)
 {
-	// Init block and grid size
+	float BLOCK_SIZE = 16.0;
+    dim3 blockSize(BLOCK_SIZE, BLOCK_SIZE);
+	dim3 gridSize(ceil(N/BLOCK_SIZE),ceil(M/BLOCK_SIZE));
+	gemm_gpu_o1_kernel<<<gridSize, blockSize>>>(A, B, C, M, N, K);
 }
 
+#define TILE_SIZE 32
 __global__ void gemm_gpu_o2_kernel(float* A, float* B, float *C, int M, int N, int K) {
+	__shared__ float tile_1[TILE_SIZE][TILE_SIZE];
+    __shared__ float tile_2[TILE_SIZE][TILE_SIZE];
+
+	int tx = threadIdx.x;
+    int ty = threadIdx.y;
+
+    int row = blockIdx.y * TILE_SIZE + ty;
+    int col = blockIdx.x * TILE_SIZE + tx;
+
+    float val = 0.0f;
+
+    for (int t = 0; t < (K + TILE_SIZE - 1) / TILE_SIZE; t++) {
+        if (row < M && t * TILE_SIZE + tx < K) {
+            tile_1[ty][tx] = A[row * K + t * TILE_SIZE + tx];
+        } else {
+            tile_1[ty][tx] = 0.0f; 
+        }
+
+        if (col < N && t * TILE_SIZE + ty < K) {
+            tile_2[ty][tx] = B[(t * TILE_SIZE + ty) * N + col];
+        } else {
+            tile_2[ty][tx] = 0.0f; 
+        }
+
+        __syncthreads();
+
+        for (int k = 0; k < TILE_SIZE; k++) {
+            val += tile_1[ty][k] * tile_2[k][tx];
+        }
+
+        __syncthreads();
+    }
+
+    if (row < M && col < N) {
+        C[row * N + col] = val;
+    }
+
 }
 void gemm_gpu_o2(float* A, float* B, float* C, int M, int N, int K)
 {
-	// Init block and grid size
+	dim3 blockSize(TILE_SIZE, TILE_SIZE);
+    dim3 gridSize((N + TILE_SIZE - 1) / TILE_SIZE, (M + TILE_SIZE - 1) / TILE_SIZE);
+    gemm_gpu_o2_kernel<<<gridSize, blockSize>>>(A, B, C, M, N, K);
+
 }
 
+#define tile_dimension 16
 __global__ void gemm_gpu_o3_kernel(float* A, float* B, float *C, int M, int N, int K) {
+	__shared__ float tile_1[tile_dimension][tile_dimension];
+    __shared__ float tile_2[tile_dimension][tile_dimension];
+
+	int tx = threadIdx.x;
+    int ty = threadIdx.y;
+
+    int row = blockIdx.y * tile_dimension + ty;
+    int col = blockIdx.x * tile_dimension + tx;
+
+    float val = 0.0f;
+
+    for (int t = 0; t < (K + tile_dimension - 1) / tile_dimension; t++) {
+        if (row < M && t * tile_dimension + tx < K) {
+            tile_1[ty][tx] = A[row * K + t * tile_dimension + tx];
+        } else {
+            tile_1[ty][tx] = 0.0f; 
+        }
+
+        if (col < N && t * tile_dimension + ty < K) {
+            tile_2[ty][tx] = B[(t * tile_dimension + ty) * N + col];
+        } else {
+            tile_2[ty][tx] = 0.0f; 
+        }
+
+        __syncthreads();
+
+        for (int k = 0; k < tile_dimension; k++) {
+            val += tile_1[ty][k] * tile_2[k][tx];
+        }
+
+        __syncthreads();
+    }
+
+    if (row < M && col < N) {
+        C[row * N + col] = val;
+    }
+
 }
 void gemm_gpu_o3(float* A, float* B, float* C, int M, int N, int K)
 {
 	// Init block and grid size
+	dim3 blockSize(tile_dimension, tile_dimension);
+    dim3 gridSize((N + tile_dimension - 1) / tile_dimension, (M + tile_dimension - 1) / tile_dimension);
+    gemm_gpu_o3_kernel<<<gridSize, blockSize>>>(A, B, C, M, N, K);
+	
 }
 
 
@@ -145,18 +241,18 @@ int main(int argc, char* argv[]) {
 	fillRandom(B, K * N);
 
 	/// GPU Implementation
-        // Check if implementation is correct
+    // Check if implementation is correct
 	auto ref = Ref();
 	float* refC = new float[Ref::M * Ref::N]();
- 	CHECK(gemm_gpu_o0)
-	CHECK(gemm_gpu_o1)
-	CHECK(gemm_gpu_o2)
+ 	// CHECK(gemm_gpu_o0)
+	// CHECK(gemm_gpu_o1)
+	// CHECK(gemm_gpu_o2)
 	CHECK(gemm_gpu_o3)
 
 	// Actual run
- 	TIME(gemm_gpu_o0)
-	TIME(gemm_gpu_o1)
-	TIME(gemm_gpu_o2)
+ 	// TIME(gemm_gpu_o0)
+	// TIME(gemm_gpu_o1)
+	// TIME(gemm_gpu_o2)
 	TIME(gemm_gpu_o3)
 
 	cudaFreeHost(A);

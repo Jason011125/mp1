@@ -1,0 +1,3 @@
+/home/ubuntu/mp1/gpu/CMakeFiles/mp1_gpu.dir
+/home/ubuntu/mp1/gpu/CMakeFiles/edit_cache.dir
+/home/ubuntu/mp1/gpu/CMakeFiles/rebuild_cache.dir

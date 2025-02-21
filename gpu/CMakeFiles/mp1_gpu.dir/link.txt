@@ -1,0 +1,1 @@
+/usr/bin/g++ @CMakeFiles/mp1_gpu.dir/objects1.rsp -o mp1_gpu @CMakeFiles/mp1_gpu.dir/linkLibs.rsp -L"/usr/local/cuda/targets/x86_64-linux/lib/stubs" -L"/usr/local/cuda/targets/x86_64-linux/lib"
