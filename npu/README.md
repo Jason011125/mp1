@@ -496,8 +496,6 @@ for i in range(Filter_Height):
 ### Implementing an NKI kernel for Convolution
 You will implement an NKI kernel for the convolution layer. Below, we will outline the detailed specifications and requirements for your convolution layer.
 
-The diagram above illustrates the calculations your convolution kernel would perform on a 6x6 input with a single input channel. The convolution kernel performs a standard convolution with one filter and stride of 1.
-
 Your convolution kernel takes in the following parameters:
   - `X` - A batch of input images. `X` has shape `(Batch Size, Input Channels, Input Height, Input Width)`. You are guaranteed that `Input Channels` will be a multiple of 128.
   - `W` - The convolution filter weights. `W` has shape `(Output Channels, Input Channels, Filter Height, Filter Width)`. You are guaranteed that `Filter Height == Filter Width`. You are also guaranteed that `Output Channels` is a multiple of 128. Moreover, you can assume that the size of the weights would always be such that it can completely fit inside SBUF.
@@ -525,7 +523,7 @@ Students also need to submit a write up briefly describing their implementations
 
 For the correctness test, we use two types of images. The first type is a small image with dimensions of 32×16. The second type is a large image with dimensions of 224×224, which exceeds the capacity of the SBUF and cannot fit within it.
 
-For the performance test, we evaluate the performance using float16 and float32 precision. We will compare the performance of your program with the reference solution. You will pass the test if your p99 latency is within 150% of the reference latency.
+For the performance test, we evaluate the performance using float16 and float32 precision. We will compare the performance of your program with the reference solution. You will pass the test if your p99 latency is within 150% of the reference latency. Please note that the performance requirement in the `test_harness.py` is already 150% of the reference latency.
 
 ## FAQs
 
